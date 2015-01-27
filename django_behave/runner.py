@@ -3,6 +3,7 @@
 
 from optparse import make_option
 from os.path import dirname, abspath, basename, join, isdir
+from . import app_settings
 
 try:
     from django.test.runner import DiscoverRunner as BaseRunner
@@ -11,8 +12,11 @@ except ImportError:
 
 try:
     # This is for Django 1.7 where StaticLiveServerTestCase is needed for
-    # static files to "just work"
-    from django.contrib.staticfiles.testing import StaticLiveServerTestCase as LiveServerTestCase
+    # static files to "just work": Controlled through a variable in the settings file
+    if (app_settings.ENABLE_STATIC_TEST_SERVER):
+        from django.contrib.staticfiles.testing import StaticLiveServerTestCase as LiveServerTestCase
+    else:
+        from django.test import LiveServerTestCase
 except ImportError:
     from django.test import LiveServerTestCase
 
@@ -124,9 +128,11 @@ def parse_argv(argv, option_info):
 
 
 class DjangoBehaveTestCase(LiveServerTestCase):
+
     def __init__(self, **kwargs):
         self.features_dir = kwargs.pop('features_dir')
         self.option_info = kwargs.pop('option_info')
+        self.fixtures = app_settings.FIXTURES
         super(DjangoBehaveTestCase, self).__init__(**kwargs)
 
     def get_features_dir(self):
